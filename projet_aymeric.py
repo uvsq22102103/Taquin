@@ -24,6 +24,11 @@ def voisinage(index: int):
     return(p_move)
 
 
+def moving(ens, move):
+    canvas.moveto(ens[0], (move % 4)*BRICK+5, (move//4)*BRICK+5)
+    canvas.moveto(ens[1], (move % 4)*BRICK+50, (move//4)*BRICK+50)
+
+
 def clic(event):
     global grillage
     x, y = event.x, event.y
@@ -41,9 +46,53 @@ def clic(event):
                     grillage[i] = None
                     break
             grillage[move] = ens
-            
-            canvas.moveto(ens[0], (move % 4)*BRICK+5, (move//4)*BRICK+5)
-            canvas.moveto(ens[1], (move % 4)*BRICK+50, (move//4)*BRICK+50)
+            moving(ens, move)
+
+
+def keypress(event, key):
+    global grillage
+    index = grillage.index(None)
+    p_move = voisinage(index)
+    if key == "Right":
+        p = index-1
+        if p in p_move:
+            grillage[index] = grillage[p]
+            grillage[p] = None
+            moving(grillage[index], index)
+    elif key == "Left":
+        p = index+1
+        if p in p_move:
+            grillage[index] = grillage[p]
+            grillage[p] = None
+            moving(grillage[index], index)
+    elif key == "Up":
+        p = index+4
+        if p in p_move:
+            grillage[index] = grillage[p]
+            grillage[p] = None
+            moving(grillage[index], index)
+    elif key == "Down":
+        p = index-4
+        if p in p_move:
+            grillage[index] = grillage[p]
+            grillage[p] = None
+            moving(grillage[index], index)
+
+
+def key_r(event):
+    keypress(event, "Right")
+
+
+def key_l(event):
+    keypress(event, "Left")
+
+
+def key_u(event):
+    keypress(event, "Up")
+
+
+def key_d(event):
+    keypress(event, "Down")
 
 
 ###########################
@@ -79,5 +128,9 @@ for y in range(4):
 print(grillage)
 
 canvas.tag_bind("brick", "<Button-1>", clic)
+root.bind_all("<KeyPress-Left>", key_l)
+root.bind_all("<KeyPress-Right>", key_r)
+root.bind_all("<KeyPress-Up>", key_u)
+root.bind_all("<KeyPress-Down>", key_d)
 
 root.mainloop()
