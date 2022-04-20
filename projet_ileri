@@ -11,6 +11,10 @@ root.title("Taquin")
 canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="brown")
 canvas.grid()
 
+def sauvegarder():
+    monfichier = open('fichier','w')
+    monfichier.write('ma variable')
+    monfichier.close
 
 nbr = []
 for i in range(16):
@@ -32,5 +36,9 @@ for x in range(4):
                                                 y*BRICK+BRICK/2,
                                                 text=tirage,
                                                 font=('Helvetica', '60'))])
+
+
+
+bouton = tk.Button(root,command= sauvegarder,text ="save").grid(row = 0 ,column =1)
 
 root.mainloop()
