@@ -153,7 +153,7 @@ for y in range(4):
         else:
             grillage.append(None)
             win_condition[tirage] = None
-print(grillage)
+check_win()
 
 canvas.tag_bind("brick", "<Button-1>", clic)
 root.bind_all("<KeyPress-Left>", key_l)
