@@ -1,12 +1,70 @@
 import tkinter as tk
 import random as rd
+from tkinter.filedialog import askopenfilename, asksaveasfilename
+import os
+
 
 ########CONSTANTES#########
 WIDTH, HEIGHT = 800, 800
 BRICK = WIDTH/4
-win = False
 ###########################
 ########FONCTIONS##########
+
+
+def start_game(save=False):
+    global grillage, win_condition, win
+    win = False
+    canvas.delete("all")
+    grillage = []
+    win_condition = {}
+    if not save:
+        nbr = []
+        for i in range(15):
+            nbr.append(i+1)
+        for y in range(4):
+            for x in range(4):
+                if y == 3 and x == 3:
+                    grillage.append(None)
+                    win_condition[16] = None
+                else:
+                    tirage = rd.choice(nbr)
+                    del nbr[nbr.index(tirage)]
+                    grillage.append([canvas.create_rectangle(x*BRICK+5,
+                                                             y*BRICK+5,
+                                                             x*BRICK+BRICK-5,
+                                                             y*BRICK+BRICK-5,
+                                                             fill="gray",
+                                                             tags="brick"),
+                                    canvas.create_text(x*BRICK+BRICK/2,
+                                                       y*BRICK+BRICK/2,
+                                                       text=tirage,
+                                                       font=('Helvetica', '60'),
+                                                       tags="brick")])
+                    win_condition[tirage] = grillage[-1]
+    else:
+        dic_cache = {}
+        for c in save:
+            num, loc = c
+            dic_cache[loc] = num
+        for y in range(4):
+            for x in range(4):
+                if dic_cache[y*4+x+1] != 16:
+                    grillage.append([canvas.create_rectangle(x*BRICK+5,
+                                                            y*BRICK+5,
+                                                            x*BRICK+BRICK-5,
+                                                            y*BRICK+BRICK-5,
+                                                            fill="gray",
+                                                            tags="brick"),
+                                    canvas.create_text(x*BRICK+BRICK/2,
+                                                        y*BRICK+BRICK/2,
+                                                        text=dic_cache[y*4+x+1],
+                                                        font=('Helvetica', '60'),
+                                                        tags="brick")])
+                else:
+                    grillage.append(None)
+                win_condition[dic_cache[y*4+x+1]] = grillage[-1]
+    check_win()
+    button_start.config(text="Reroll")
 
 
 def voisinage(index: int):
@@ -100,6 +158,26 @@ def key_d(event):
     keypress(event, "Down")
 
 
+def key_dd(event):
+    keypress(event, "Down")
+    keypress(event, "Down")
+
+
+def key_ud(event):
+    keypress(event, "Up")
+    keypress(event, "Up")
+
+
+def key_ld(event):
+    keypress(event, "Left")
+    keypress(event, "Left")
+
+
+def key_rd(event):
+    keypress(event, "Right")
+    keypress(event, "Right")
+
+
 def show_win_condition(event):
     print(win_condition)
 
@@ -118,48 +196,65 @@ def check_win():
     if cpt == 16:
         print("Bravo tu as gagné !")
         win = True
+    elif cpt == 14:
+        print("Ce Taquin n'a pas de solution !")
+        win = True
+
+
+def save_party():
+    save_dir = asksaveasfilename(initialdir=os.getcwd(),
+                                 initialfile="save.taquin")
+    print(save_dir[-7::])
+    if save_dir[-7::] == ".taquin":
+        print("Directory : ", save_dir)
+        fichier = open(file=save_dir, mode="w")
+        output = ""
+        for i in range(16):
+            output += str(i+1)+":"+str(grillage.index(win_condition[i+1])+1)+" "
+        fichier.write(output)
+        fichier.close()
+    elif save_dir == "":
+        print("You skip the save")
+    else:
+        print("Wrong one")
+        save_party()
+
+
+def load_party():
+    load_dir = askopenfilename(initialdir=os.getcwd())
+    fichier = open(file=load_dir, mode="r")
+    texte = fichier.readline().split()
+    fichier.close()
+    output = []
+    for coords in texte:
+        sep = coords.index(":")
+        output.append([int(coords[:sep]), int(coords[sep+1:])])
+    start_game(output)
 
 
 ###########################
 
+
 root = tk.Tk()
 root.title("Taquin")
 canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="brown")
-canvas.grid()
-
-
-nbr = []
-for i in range(16):
-    nbr.append(i+1)
-grillage = []
-win_condition = {}
-for y in range(4):
-    for x in range(4):
-        tirage = rd.choice(nbr)
-        del nbr[nbr.index(tirage)]
-        if tirage != 16:
-            grillage.append([canvas.create_rectangle(x*BRICK+5,
-                                                     y*BRICK+5,
-                                                     x*BRICK+BRICK-5,
-                                                     y*BRICK+BRICK-5,
-                                                     fill="gray",
-                                                     tags="brick"),
-                            canvas.create_text(x*BRICK+BRICK/2,
-                                               y*BRICK+BRICK/2,
-                                               text=tirage,
-                                               font=('Helvetica', '60'),
-                                               tags="brick")])
-            win_condition[tirage] = grillage[-1]
-        else:
-            grillage.append(None)
-            win_condition[tirage] = None
-check_win()
+button_start = tk.Button(root, text="Start", command=start_game)
+button_save = tk.Button(root, text="Save", command=save_party)
+button_load = tk.Button(root, text="Load", command=load_party)
+canvas.grid(row=0, rowspan=5, column=0)
+button_start.grid(row=0, column=1)
+button_save.grid(row=1, column=1)
+button_load.grid(row=2, column=1)
 
 canvas.tag_bind("brick", "<Button-1>", clic)
 root.bind_all("<KeyPress-Left>", key_l)
+root.bind_all("<Double-KeyPress-Left>", key_ld)
 root.bind_all("<KeyPress-Right>", key_r)
+root.bind_all("<Double-KeyPress-Right>", key_rd)
 root.bind_all("<KeyPress-Up>", key_u)
+root.bind_all("<Double-KeyPress-Up>", key_ud)
 root.bind_all("<KeyPress-Down>", key_d)
+root.bind_all("<Double-KeyPress-Down>", key_dd)
 root.bind_all("<KeyPress-space>", show_win_condition)
 
 root.mainloop()
