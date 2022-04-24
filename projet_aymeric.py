@@ -4,10 +4,11 @@ from tkinter.filedialog import askopenfilename, asksaveasfilename
 import os
 
 
-########CONSTANTES#########
+########CONSTANTES ET VARIABLES#########
 WIDTH, HEIGHT = 800, 800
 BRICK = WIDTH/4
-###########################
+undo_liste = []
+########################################
 ########FONCTIONS##########
 
 
@@ -110,7 +111,7 @@ def clic(event):
         check_win()
 
 
-def keypress(event, key):
+def keypress(event, key, undo=False):
     if not win:
         global grillage
         index = grillage.index(None)
@@ -121,24 +122,40 @@ def keypress(event, key):
                 grillage[index] = grillage[p]
                 grillage[p] = None
                 moving(grillage[index], index)
+                if not undo:
+                    undo_liste.append("Left")
+                else:
+                    del undo_liste[-1]
         elif key == "Left":
             p = index+1
             if p in p_move:
                 grillage[index] = grillage[p]
                 grillage[p] = None
                 moving(grillage[index], index)
+                if not undo:
+                    undo_liste.append("Right")
+                else:
+                    del undo_liste[-1]
         elif key == "Up":
             p = index+4
             if p in p_move:
                 grillage[index] = grillage[p]
                 grillage[p] = None
                 moving(grillage[index], index)
+                if not undo:
+                    undo_liste.append("Down")
+                else:
+                    del undo_liste[-1]
         elif key == "Down":
             p = index-4
             if p in p_move:
                 grillage[index] = grillage[p]
                 grillage[p] = None
                 moving(grillage[index], index)
+                if not undo:
+                    undo_liste.append("Up")
+                else:
+                    del undo_liste[-1]
         check_win()
 
 
@@ -232,6 +249,11 @@ def load_party():
     start_game(output)
 
 
+def undo():
+    if len(undo_liste) != 0:
+        keypress(None, undo_liste[-1], True)
+
+
 ###########################
 
 
@@ -241,10 +263,12 @@ canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="brown")
 button_start = tk.Button(root, text="Start", command=start_game)
 button_save = tk.Button(root, text="Save", command=save_party)
 button_load = tk.Button(root, text="Load", command=load_party)
+button_undo = tk.Button(root, text="Undo", command=undo)
 canvas.grid(row=0, rowspan=5, column=0)
 button_start.grid(row=0, column=1)
 button_save.grid(row=1, column=1)
 button_load.grid(row=2, column=1)
+button_undo.grid(row=3, column=1)
 
 canvas.tag_bind("brick", "<Button-1>", clic)
 root.bind_all("<KeyPress-Left>", key_l)
