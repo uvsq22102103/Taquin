@@ -51,16 +51,16 @@ def start_game(save=False):
             for x in range(4):
                 if dic_cache[y*4+x+1] != 16:
                     grillage.append([canvas.create_rectangle(x*BRICK+5,
-                                                            y*BRICK+5,
-                                                            x*BRICK+BRICK-5,
-                                                            y*BRICK+BRICK-5,
-                                                            fill="gray",
-                                                            tags="brick"),
+                                                             y*BRICK+5,
+                                                             x*BRICK+BRICK-5,
+                                                             y*BRICK+BRICK-5,
+                                                             fill="gray",
+                                                             tags="brick"),
                                     canvas.create_text(x*BRICK+BRICK/2,
-                                                        y*BRICK+BRICK/2,
-                                                        text=dic_cache[y*4+x+1],
-                                                        font=('Helvetica', '60'),
-                                                        tags="brick")])
+                                                       y*BRICK+BRICK/2,
+                                                       text=dic_cache[y*4+x+1],
+                                                       font=('Helvetica', '60'),
+                                                       tags="brick")])
                 else:
                     grillage.append(None)
                 win_condition[dic_cache[y*4+x+1]] = grillage[-1]
@@ -102,10 +102,15 @@ def clic(event):
             p_move = voisinage(grillage.index(ens))
         for move in p_move:
             if grillage[move] is None:
-                for i in range(len(grillage)):
-                    if grillage[i] == ens:
-                        grillage[i] = None
-                        break
+                if move-grillage.index(ens) == 1:
+                    undo_liste.append("Left")
+                elif move-grillage.index(ens) == -1:
+                    undo_liste.append("Right")
+                elif move-grillage.index(ens) == 4:
+                    undo_liste.append("Up")
+                elif move-grillage.index(ens) == -4:
+                    undo_liste.append("Down")
+                grillage[grillage.index(ens)] = None
                 grillage[move] = ens
                 moving(ens, move)
         check_win()
@@ -195,10 +200,6 @@ def key_rd(event):
     keypress(event, "Right")
 
 
-def show_win_condition(event):
-    print(win_condition)
-
-
 def check_win():
     global win
     cpt = 0
@@ -228,6 +229,7 @@ def save_party():
         output = ""
         for i in range(16):
             output += str(i+1)+":"+str(grillage.index(win_condition[i+1])+1)+" "
+        output += "\n" + " ".join(undo_liste)
         fichier.write(output)
         fichier.close()
     elif save_dir == "":
@@ -238,9 +240,11 @@ def save_party():
 
 
 def load_party():
+    global undo_liste
     load_dir = askopenfilename(initialdir=os.getcwd())
     fichier = open(file=load_dir, mode="r")
     texte = fichier.readline().split()
+    undo_liste = fichier.readlines(1)[0].split()
     fichier.close()
     output = []
     for coords in texte:
@@ -279,6 +283,5 @@ root.bind_all("<KeyPress-Up>", key_u)
 root.bind_all("<Double-KeyPress-Up>", key_ud)
 root.bind_all("<KeyPress-Down>", key_d)
 root.bind_all("<Double-KeyPress-Down>", key_dd)
-root.bind_all("<KeyPress-space>", show_win_condition)
 
 root.mainloop()
