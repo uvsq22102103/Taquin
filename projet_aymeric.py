@@ -2,23 +2,24 @@ import tkinter as tk
 import random as rd
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 import os
+import copy
 
 
 ########CONSTANTES ET VARIABLES#########
 WIDTH, HEIGHT = 800, 800
 BRICK = WIDTH/4
-undo_liste = []
 ########################################
 ########FONCTIONS##########
 
 
 def start_game(save=False):
-    global grillage, win_condition, win
+    global grillage, win_condition, win, undo_liste
     win = False
     canvas.delete("all")
     grillage = []
     win_condition = {}
     if not save:
+        undo_liste = []
         nbr = []
         for i in range(15):
             nbr.append(i+1)
@@ -214,7 +215,7 @@ def check_win():
     if cpt == 16:
         print("Bravo tu as gagné !")
         win = True
-    elif cpt == 14:
+    elif cpt == 15:
         print("Ce Taquin n'a pas de solution !")
         win = True
 
@@ -258,6 +259,33 @@ def undo():
         keypress(None, undo_liste[-1], True)
 
 
+def dist_manhattan(nbr: int = 0, liste=False):
+    """Fonction qui calcule la distance du nbr en entrée sur la grille entre son
+    placement au temps t et sa place définitive"""
+    if nbr != 0:
+        if liste:
+            p = liste.index(win_condition[nbr])
+        else:
+            p = grillage.index(win_condition[nbr])
+        px, py = p % 4, p // 4
+        x, y = (nbr-1) % 4, (nbr-1) // 4
+        return abs(x-px)+abs(y-py)
+    else:
+        dico = {}
+        for i in range(15):
+            dico[i+1] = dist_manhattan(i+1,liste)
+        return dico
+
+
+def taquin_possible():
+    pass
+
+
+def ia_taquin():
+    """IA basée sur de l'information heuristique"""
+    grille = copy.deepcopy(grillage)
+    print(grille)
+    pass
 ###########################
 
 
@@ -268,11 +296,15 @@ button_start = tk.Button(root, text="Start", command=start_game)
 button_save = tk.Button(root, text="Save", command=save_party)
 button_load = tk.Button(root, text="Load", command=load_party)
 button_undo = tk.Button(root, text="Undo", command=undo)
+button_ia = tk.Button(root, text="IA", command=ia_taquin)
+label = tk.Label(root, text="Bonne chance")
 canvas.grid(row=0, rowspan=5, column=0)
 button_start.grid(row=0, column=1)
 button_save.grid(row=1, column=1)
 button_load.grid(row=2, column=1)
 button_undo.grid(row=3, column=1)
+button_ia.grid(row=4, column=1)
+label.grid(row=5, column=0, columnspan=1)
 
 canvas.tag_bind("brick", "<Button-1>", clic)
 root.bind_all("<KeyPress-Left>", key_l)
