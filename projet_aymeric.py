@@ -1,15 +1,20 @@
+#########################
+# IMPORT DES LIBRAIRIES #
+
 import tkinter as tk
 import random as rd
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 import os
 import copy
 
+###########################
+# CONSTANTES ET VARIABLES #
 
-########CONSTANTES ET VARIABLES#########
 WIDTH, HEIGHT = 800, 800
 BRICK = WIDTH/4
-########################################
-########FONCTIONS##########
+
+#############
+# FONCTIONS #
 
 
 def start_game(save=False):
