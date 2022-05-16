@@ -1,7 +1,9 @@
+import os
 import time
 import tkinter as tk
 import random as rd
 from copy import deepcopy
+from tkinter.filedialog import askopenfilename, asksaveasfilename
 
 
 HEIGHT, WIDTH = 400, 400
@@ -9,6 +11,7 @@ ECART = HEIGHT/4
 x, y = 0, 0
 cpt = 0
 cpt_2 = 0
+l_undo = []
 
 
 def get_coord(nbr):
@@ -88,14 +91,11 @@ def deplacer(event):
             except:
                 pass
         grille[i_X[0]][i_X[1]], grille[i_nbr[0]][i_nbr[1]] = grille[i_nbr[0]][i_nbr[1]], grille[i_X[0]][i_X[1]]
-        for i in grille:
-            print(i)
-        print("")
     check_win(grille,solution)
 
 
 def rd_color():
-    r, g, b = hex(rd.randint(30, 255))[2::], hex(rd.randint(30, 255))[2::], hex(rd.randint(30, 255))[2::]
+    r, g, b = hex(rd.randint(30, 255))[2::], hex(rd.randint(30, 160))[2::], hex(rd.randint(30, 255))[2::]
     if len(r) == 1:
         r = "0" + r
     if len(g) == 1:
@@ -166,7 +166,18 @@ def clavier(event):
             except:
                 pass
     try:
-        objs_nbr = grille_objs[v[a.index(event.keysym)]]
+        if type(event) != str:
+            objs_nbr = grille_objs[v[a.index(event.keysym)]]
+            if event.keysym == "Up":
+                l_undo.append("Down")
+            elif event.keysym == "Down":
+                l_undo.append("Up")
+            elif event.keysym == "Right":
+                l_undo.append("Left")
+            elif event.keysym == "Left":
+                l_undo.append("Right")
+        else:
+            objs_nbr = grille_objs[v[a.index(event)]]
         objs_X = grille_objs["X"]
         coords_nbr = canvas.coords(objs_nbr[0])[:2]
         coords_X = canvas.coords(objs_X[0])[:2]
@@ -175,7 +186,10 @@ def clavier(event):
         canvas.moveto(objs_X[0],coords_nbr[0]-1,coords_nbr[1]-1)
         canvas.moveto(objs_X[1],coords_nbr[0]+30,coords_nbr[1]+10)
         c_X = get_coord("X")
-        c_nbr = get_coord(v[a.index(event.keysym)])
+        if type(event) != str:
+            c_nbr = get_coord(v[a.index(event.keysym)])
+        else:
+            c_nbr = get_coord(v[a.index(event)])
         grille[c_X[0]][c_X[1]], grille[c_nbr[0]][c_nbr[1]] = grille[c_nbr[0]][c_nbr[1]], grille[c_X[0]][c_X[1]]
     except:
         print("Commande mauvaise")
@@ -183,8 +197,95 @@ def clavier(event):
 
 
 def check_win(grille,solution):
+    for i in range(4):
+        for j in range(4):
+            if grille[i][j] != "X":
+                obj = grille_objs[grille[i][j]][0]
+                if grille[i][j] == solution[i][j]:
+                    canvas.itemconfigure(obj, fill="green")
+                else:
+                    canvas.itemconfigure(obj, fill="gray")
     if grille == solution:
         print("win")
+
+
+def save_party():
+    save_dir = asksaveasfilename(initialdir=os.getcwd(),
+                                 initialfile="save.taquin")
+    print(save_dir[-7::])
+    if save_dir[-7::] == ".taquin":
+        print("Directory : ", save_dir)
+        fichier = open(file=save_dir, mode="w")
+        output = ""
+        for i in range(16):
+            coords = get_coord(solution[i//4][i%4])
+            output += str(i+1)+":"+str((coords[0]*4)+coords[1])+" "
+        output += "\n" + " ".join(l_undo)
+        fichier.write(output)
+        fichier.close()
+    elif save_dir == "":
+        print("You skip the save")
+    else:
+        print("Wrong one")
+        save_party()
+
+
+def load_party():
+    global l_undo
+    load_dir = askopenfilename(initialdir=os.getcwd())
+    fichier = open(file=load_dir, mode="r")
+    texte = fichier.readline().split()
+    l_undo = fichier.readlines(1)[0].split()
+    fichier.close()
+    output = []
+    for coords in texte:
+        sep = coords.index(":")
+        output.append([int(coords[:sep]), int(coords[sep+1:])])
+    start_game(output)
+
+
+def start_game(load = False):
+    global grille, grille_objs, objs_grille
+    if not load:
+        grille = melange(solution)
+        while not resolvable(grille,solution):
+            grille = melange(solution)
+    else:
+        grille = []
+        for i in range(4):
+            grille.append([])
+            for j in range(4):
+                grille[i].append([])
+        s = solution[0]+solution[1]+solution[2]+solution[3]
+        for i in load:
+            nbr = s[i[0]-1]
+            grille[i[1]//4][i[1]%4] = nbr
+    grille_objs = {} #dictionnaire qui retourne les objs associés à un seul nbr
+    objs_grille = {} #dictionnaire qui fais exactement l'inverse
+    for line in grille:
+        for nbr in line:
+            if nbr != "X":
+                grille_objs[nbr] = (
+                    canvas.create_rectangle(ECART*line.index(nbr),ECART*grille.index(line),
+                    (ECART*line.index(nbr))+ECART,(ECART*grille.index(line))+ECART,fill=rd_color()),
+                    canvas.create_text((ECART*line.index(nbr))+ECART/2,
+                    (ECART*grille.index(line))+ECART/2,text=nbr,font=('Helvetica', '60'))
+                )
+            else:
+                grille_objs[nbr] = (
+                    canvas.create_rectangle(ECART*line.index(nbr),ECART*grille.index(line),
+                    (ECART*line.index(nbr))+ECART,(ECART*grille.index(line))+ECART,fill="black"),
+                    canvas.create_text((ECART*line.index(nbr))+ECART/2,
+                    (ECART*grille.index(line))+ECART/2,text=nbr,font=('Helvetica', '60'))
+                )
+    for i in grille_objs.items():
+        objs_grille[i[1]] = i[0]
+
+
+def retour():
+    global l_undo
+    clavier(l_undo[-1])
+    del l_undo[-1]
 
 
 ######### Corps d'éxécution #########
@@ -196,35 +297,22 @@ for i in range(4):
         solution[i].append(hex(i*4+j+1)[2:])
 solution[-1][-1] = "X"
 
-grille = melange(solution)
-while not resolvable(grille,solution):
-    grille = melange(solution)
-
 root = tk.Tk()
 root.title("Le Taquin taquine ?")
 
 canvas = tk.Canvas(root, height=HEIGHT, width= WIDTH, bg="black")
-canvas.grid()
-grille_objs = {} #dictionnaire qui retourne les objs associés à un seul nbr
-objs_grille = {} #dictionnaire qui fais exactement l'inverse
-for line in grille:
-    for nbr in line:
-        if nbr != "X":
-            grille_objs[nbr] = (
-                canvas.create_rectangle(ECART*line.index(nbr),ECART*grille.index(line),
-                (ECART*line.index(nbr))+ECART,(ECART*grille.index(line))+ECART,fill=rd_color()),
-                canvas.create_text((ECART*line.index(nbr))+ECART/2,
-                (ECART*grille.index(line))+ECART/2,text=nbr,font=('Helvetica', '60'))
-            )
-        else:
-            grille_objs[nbr] = (
-                canvas.create_rectangle(ECART*line.index(nbr),ECART*grille.index(line),
-                (ECART*line.index(nbr))+ECART,(ECART*grille.index(line))+ECART,fill="black"),
-                canvas.create_text((ECART*line.index(nbr))+ECART/2,
-                (ECART*grille.index(line))+ECART/2,text=nbr,font=('Helvetica', '60'))
-            )
-for i in grille_objs.items():
-    objs_grille[i[1]] = i[0]
+button_save = tk.Button(root,text="Sauvegarde",command=save_party)
+button_load = tk.Button(root,text="Chargement",command=load_party)
+button_retour = tk.Button(root,text="Retour",command=retour)
+button_partie = tk.Button(root,text="Nouvelle Partie",command=start_game)
+canvas.grid(row=0,rowspan=1,column=0,columnspan=4)
+button_save.grid(row=1,column=0)
+button_load.grid(row=1,column=1)
+button_partie.grid(row=1,column=2)
+button_retour.grid(row=1,column=3)
+
+
+start_game()
 
 canvas.bind("<1>",deplacer)
 root.event_add("<<fleches>>","<Up>","<Down>","<Left>","<Right>")

@@ -1,7 +1,9 @@
+import os
 import time
 import tkinter as tk
 import random as rd
 from copy import deepcopy
+from tkinter.filedialog import asksaveasfilename
 
 
 HEIGHT, WIDTH = 400, 400
@@ -187,6 +189,7 @@ def check_win(grille,solution):
         print("win")
 
 
+
 ######### Corps d'éxécution #########
 
 solution = list()
@@ -204,7 +207,7 @@ root = tk.Tk()
 root.title("Le Taquin taquine ?")
 
 canvas = tk.Canvas(root, height=HEIGHT, width= WIDTH, bg="black")
-canvas.grid()
+
 grille_objs = {} #dictionnaire qui retourne les objs associés à un seul nbr
 objs_grille = {} #dictionnaire qui fais exactement l'inverse
 for line in grille:
