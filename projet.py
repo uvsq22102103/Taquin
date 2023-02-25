@@ -18,7 +18,7 @@ from tkinter.filedialog import askopenfilename, asksaveasfilename
 ###################################
 # VARIABLES ET CONSTANTES D'USAGE #
 
-HEIGHT, WIDTH = 400, 400
+HEIGHT, WIDTH = 900, 900
 ECART = HEIGHT/4
 x, y = 0, 0
 cpt = 0
